@@ -3,7 +3,6 @@ from pathlib import Path
 # ── Identity ────────────────────────────────────────────────────────────────
 APP_NAME    = "DNS-Shield"
 APP_VERSION = "0.1.0"
-PART_OF     = "Void Weapon"
 
 # ── Paths ───────────────────────────────────────────────────────────────────
 BASE_DIR    = Path(__file__).parent          # wherever shield/ lives
