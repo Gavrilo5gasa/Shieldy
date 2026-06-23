@@ -9,9 +9,9 @@
 
 | Subphase              | Contents                                      | Status       |
 |-----------------------|-----------------------------------------------|--------------|
-| 1.1 — Foundation      | Project structure, config, utils              | 🔲 Todo      |
-| 1.2 — DNS Server      | UDP listener on port 5353, dnslib             | 🔲 Todo      |
-| 1.3 — Upstream        | Forward allowed queries to 1.1.1.1 / 9.9.9.9 | 🔲 Todo      |
+| 1.1 — Foundation      | Project structure, config, utils              | ✅ Done (Ai) |
+| 1.2 — DNS Server      | UDP listener on port 5353, dnslib             | ✅ Done (Ai) |
+| 1.3 — Upstream        | Forward allowed queries to 1.1.1.1 / 9.9.9.9  | 🔲 Todo      |
 | 1.4 — Blocklist       | Load .txt / hosts-format lists, set lookup    | 🔲 Todo      |
 | 1.5 — Filter Logic    | Block → NXDOMAIN, allow → upstream            | 🔲 Todo      |
 | 1.6 — CLI Interface   | main.py (Typer), start/stop/status commands   | 🔲 Todo      |
