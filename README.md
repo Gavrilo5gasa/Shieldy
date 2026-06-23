@@ -1,4 +1,4 @@
-# DNS-Shield
+# Shieldy 🛡️
 > Custom DNS-level blocker and network protection tool.
 > Part of Void Weapon — Stage 1.
 > Living document — update as the project evolves.
