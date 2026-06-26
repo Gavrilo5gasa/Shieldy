@@ -1,47 +1,108 @@
-import logging
-from pathlib import Path
+"""
+db/logger.py — Shieldy query logger
 
-from rich.logging import RichHandler
+Every DNS query that passes through Shieldy gets logged here.
+Uses aiosqlite so DB writes never block the DNS server.
+
+Schema:
+    queries table — one row per DNS query
+        id          INTEGER  autoincrement
+        timestamp   TEXT     UTC ISO format
+        domain      TEXT     the domain queried
+        qtype       TEXT     query type: A, AAAA, MX, etc.
+        blocked     INTEGER  1 = blocked, 0 = allowed
+        category    TEXT     ads / trackers / malware / custom / "" 
+        client_ip   TEXT     always 127.0.0.1 for now (local only)
+
+This is append-only — we never UPDATE or DELETE rows.
+Evidence integrity rule from AutoCatcher applies here too :)
+"""
+
+import asyncio
+import aiosqlite
 
 import config
+from utils.logger import get_logger
+from utils.timestamp import now_iso
+
+log = get_logger(__name__)
+
+# Module-level DB connection — opened once at startup
+_db: aiosqlite.Connection | None = None
+_lock = asyncio.Lock()   # prevent concurrent schema init
 
 
-def get_logger(name: str) -> logging.Logger:
+async def init() -> None:
     """
-    Get a logger for a module. Call this at the top of every file:
-
-        from utils.logger import get_logger
-        log = get_logger(__name__)
-
-    Then use:
-        log.info("Server started")
-        log.warning("Upstream timeout")
-        log.error("Failed to load blocklist")
-        log.debug("Query received: example.com")
+    Open the SQLite DB and create the queries table if it doesn't exist.
+    Call this once at startup before the DNS server starts.
     """
-    logger = logging.getLogger(name)
+    global _db
 
-    # Don't add handlers twice if get_logger is called multiple times
-    if logger.handlers:
-        return logger
+    async with _lock:
+        if _db is not None:
+            return   # already initialized
 
-    logger.setLevel(getattr(logging, config.LOG_LEVEL, logging.INFO))
+        _db = await aiosqlite.connect(config.DB_PATH)
+        _db.row_factory = aiosqlite.Row   # rows as dict-like objects
 
-    # ── Console handler (Rich — pretty colours in terminal) ──────────────────
-    console = RichHandler(
-        rich_tracebacks=True,
-        show_path=False,        # don't print full file path on every line
-        markup=True,
+        await _db.execute("""
+            CREATE TABLE IF NOT EXISTS queries (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp   TEXT    NOT NULL,
+                domain      TEXT    NOT NULL,
+                qtype       TEXT    NOT NULL DEFAULT 'A',
+                blocked     INTEGER NOT NULL DEFAULT 0,
+                category    TEXT    NOT NULL DEFAULT '',
+                client_ip   TEXT    NOT NULL DEFAULT '127.0.0.1'
+            )
+        """)
+
+        # Index on domain for fast lookups in stats queries
+        await _db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_domain
+            ON queries (domain)
+        """)
+
+        # Index on timestamp for time-range queries (JF graphs by hour/day)
+        await _db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_timestamp
+            ON queries (timestamp)
+        """)
+
+        await _db.commit()
+        log.info(f"Query log DB ready: {config.DB_PATH}")
+
+
+async def log_query(
+    domain: str,
+    blocked: bool,
+    category: str = "",
+    qtype: str = "A",
+    client_ip: str = "127.0.0.1",
+) -> None:
+    """
+    Log a single DNS query. Called by dns/server.py after every query.
+    Non-blocking — uses aiosqlite so the DNS server never waits for disk.
+    """
+    if _db is None:
+        log.warning("DB not initialized — call db.logger.init() at startup")
+        return
+
+    await _db.execute(
+        """
+        INSERT INTO queries (timestamp, domain, qtype, blocked, category, client_ip)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (now_iso(), domain, qtype, int(blocked), category, client_ip),
     )
-    console.setLevel(logging.DEBUG)
-    logger.addHandler(console)
+    await _db.commit()
 
-    # ── File handler (plain text, always DEBUG level for full history) ────────
-    file_handler = logging.FileHandler(config.LOG_PATH, encoding="utf-8")
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(
-        logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-    )
-    logger.addHandler(file_handler)
 
-    return logger
+async def close() -> None:
+    """Close the DB connection cleanly on shutdown."""
+    global _db
+    if _db:
+        await _db.close()
+        _db = None
+        log.info("Query log DB closed")

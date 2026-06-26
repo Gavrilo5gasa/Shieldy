@@ -1,20 +1,19 @@
 # Shieldy 🛡️
 > Custom DNS-level blocker and network protection tool.
-> Part of Void Weapon — Stage 1.
 > Living document — update as the project evolves.
 
 # Overview
 
 ## Phase 1 — DNS Core
 
-| Subphase              | Contents                                      | Status       |
-|-----------------------|-----------------------------------------------|--------------|
+| Subphase              | Contents                                      | Status      |
+|-----------------------|-----------------------------------------------|-------------|
 | 1.1 — Foundation      | Project structure, config, utils              | ✅ Done (Ai) |
 | 1.2 — DNS Server      | UDP listener on port 5353, dnslib             | ✅ Done (Ai) |
-| 1.3 — Upstream        | Forward allowed queries to 1.1.1.1 / 9.9.9.9  | 🔲 Todo      |
-| 1.4 — Blocklist       | Load .txt / hosts-format lists, set lookup    | 🔲 Todo      |
-| 1.5 — Filter Logic    | Block → NXDOMAIN, allow → upstream            | 🔲 Todo      |
-| 1.6 — CLI Interface   | main.py (Typer), start/stop/status commands   | 🔲 Todo      |
+| 1.3 — Upstream        | Forward allowed queries to 1.1.1.1 / 9.9.9.9  | ✅ Done (Ai) |
+| 1.4 — Blocklist       | Load .txt / hosts-format lists, set lookup    | ✅ Done (Ai) |
+| 1.5 — Filter Logic    | Block → NXDOMAIN, allow → upstream            | ✅ Done (Ai) |
+| 1.6 — CLI Interface   | main.py (Typer), start/stop/status commands   | ✅ Done (Ai) |
 
 ## Phase 2 — Logging & Stats
 

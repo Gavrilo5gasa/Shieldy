@@ -12,10 +12,9 @@ incoming queries, just pointed outward at the upstream server.
 import asyncio
 import socket
 
+import config
 import dnslib
 from dnslib import DNSRecord
-
-import config
 from utils.logger import get_logger
 
 log = get_logger(__name__)
@@ -43,7 +42,9 @@ async def resolve_upstream(
             timeout=config.DNS_TIMEOUT,
         )
     except asyncio.TimeoutError:
-        log.warning(f"Upstream {upstream} timed out — trying fallback {config.DNS_UPSTREAM2}")
+        log.warning(
+            f"Upstream {upstream} timed out — trying fallback {config.DNS_UPSTREAM2}"
+        )
         # Try the fallback upstream once before giving up
         if upstream != config.DNS_UPSTREAM2:
             return await resolve_upstream(request, upstream=config.DNS_UPSTREAM2)
@@ -57,7 +58,7 @@ async def resolve_upstream(
 async def _send_udp(data: bytes, upstream: str) -> DNSRecord | None:
     """
     Send raw DNS bytes over UDP to the upstream and await the reply.
-    Uses asyncio's low-level sock_sendall / sock_recv on a non-blocking socket.
+    Uses asyncio's low-level socket API on a non-blocking socket.
     """
     loop = asyncio.get_running_loop()
 
@@ -65,15 +66,8 @@ async def _send_udp(data: bytes, upstream: str) -> DNSRecord | None:
     sock.setblocking(False)
 
     try:
-        # Send the query
-        await loop.sock_sendall(sock, data)  # type: ignore[arg-type]
-        # Actually need sendto for UDP since we're not connected
-        sock.close()
-
-        # Re-open cleanly and use connect() so sock_recv works
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setblocking(False)
-        sock.connect((upstream, 53))
+        # Connect first — required before sock_sendall on UDP
+        await loop.sock_connect(sock, (upstream, 53))
         await loop.sock_sendall(sock, data)
 
         # DNS responses are at most 512 bytes for plain UDP

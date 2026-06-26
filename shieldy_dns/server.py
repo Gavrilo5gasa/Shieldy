@@ -16,11 +16,11 @@ Each query is handled in datagram_received() — no threads needed.
 import asyncio
 
 import dnslib
-from dnslib import DNSRecord, QTYPE, RCode
+from dnslib import DNSRecord, QTYPE, RCODE
 
 import config
-from dns.filter import is_blocked
-from dns.upstream import resolve_upstream
+from shieldy_dns.filter import is_blocked
+from shieldy_dns.upstream import resolve_upstream
 from utils.logger import get_logger
 
 log = get_logger(__name__)
@@ -87,7 +87,7 @@ class ShieldyProtocol(asyncio.DatagramProtocol):
             if reply is None:
                 # Upstream failed — return SERVFAIL so the OS knows to retry
                 reply = request.reply()
-                reply.header.rcode = RCode.SERVFAIL
+                reply.header.rcode = RCODE.SERVFAIL
                 log.warning(f"Upstream failed for {domain} — returning SERVFAIL")
             else:
                 log.debug(f"ALLOWED {domain}")
@@ -99,7 +99,7 @@ class ShieldyProtocol(asyncio.DatagramProtocol):
     def _nxdomain(request: DNSRecord) -> DNSRecord:
         """Build an NXDOMAIN reply — 'this domain does not exist'."""
         reply = request.reply()
-        reply.header.rcode = RCode.NXDOMAIN
+        reply.header.rcode = RCODE.NXDOMAIN
         return reply
 
 
@@ -109,7 +109,7 @@ async def run_server() -> None:
 
     Example:
         import asyncio
-        from dns.server import run_server
+        from shieldy_dns.server import run_server
         asyncio.run(run_server())
     """
     loop = asyncio.get_running_loop()
