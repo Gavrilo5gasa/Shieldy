@@ -25,7 +25,7 @@ cd Shieldy
 # 2. Install dependencies
 pip install dnslib aiohttp aiosqlite typer rich
 
-# 3. Download a blocklist
+# 3. Create the Blocklists Folder and download a blocklist
 mkdir -p lists/bundled
 curl -o lists/bundled/hagezi-ads.txt \
   https://raw.githubusercontent.com/hagezi/dns-blocklists/main/hosts/pro.txt
