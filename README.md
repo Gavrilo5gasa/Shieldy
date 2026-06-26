@@ -18,7 +18,7 @@ Everything that passes through gets logged to a local SQLite database so you can
 ## Quick start
 
 ```bash
-# 1. Clone and enter
+# 1. Clone the repo
 git clone https://github.com/Gavrilo5gasa/Shieldy
 cd Shieldy
 
@@ -48,7 +48,7 @@ To use Shieldy as your actual system DNS, set your DNS to `127.0.0.1` port `5353
 # Start (DNS only)
 PYTHONPATH=. python3 main.py start --no-web
 
-# Start (DNS + web dashboard)
+# Start (DNS + web dashboard) -- Not Done yet
 PYTHONPATH=. python3 main.py start
 
 # Live stats
@@ -149,7 +149,7 @@ Add your own rules to `lists/custom.txt` — one domain per line.
 
 ---
 
-## Part of Void Weapon
+## Project Void Weapon
 
 | Stage  | Name        | What it does                              | Status      |
 |--------|-------------|-------------------------------------------|-------------|
